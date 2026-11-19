@@ -1,0 +1,136 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  # A rehearsal from any branch: verify and build everything, then stop before the release is
+  # created. dry_run=false is accepted only on a tag.
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Verify, build and package, but do not publish a release
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Versions agree
+        run: scripts/check-versions.sh
+      - name: Tag matches the crate version
+        env:
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          version=$(sed -n 's/^version = "\(.*\)"$/\1/p' Cargo.toml | head -n 1)
+          if [ "$GITHUB_REF_TYPE" = tag ]; then
+            if [ "$GITHUB_REF_NAME" != "v$version" ]; then
+              echo "::error::tag $GITHUB_REF_NAME does not match Cargo.toml version $version"
+              exit 1
+            fi
+          elif [ "$DRY_RUN" != true ]; then
+            echo "::error::a release can only be published from a tag, not from $GITHUB_REF_NAME"
+            exit 1
+          fi
+      - name: CHANGELOG has notes for this version
+        run: |
+          version=$(sed -n 's/^version = "\(.*\)"$/\1/p' Cargo.toml | head -n 1)
+          scripts/check-versions.sh --notes "v$version" > /dev/null
+
+  build:
+    needs: verify
+    strategy:
+      fail-fast: true
+      matrix:
+        arch: [x86_64, aarch64]
+    # Both architectures build on x86_64: aarch64 is cross-compiled (pure Rust, linked with
+    # rust-lld) and smoke-tested under qemu, so releases work in private repositories too,
+    # where GitHub's arm64 runners are not available.
+    runs-on: ubuntu-24.04
+    env:
+      CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER: rust-lld
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Install the pinned toolchain and the musl target
+        run: |
+          rustup toolchain install
+          rustup target add "${{ matrix.arch }}-unknown-linux-musl"
+      - name: Install musl-tools and qemu
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends musl-tools qemu-user-static
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: release-${{ matrix.arch }}
+      - name: Build
+        run: cargo build --release --locked --target "${{ matrix.arch }}-unknown-linux-musl"
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-about@0.9.3
+      - name: Third-party licences
+        run: cargo about generate --locked --fail about.hbs > THIRD_PARTY_LICENSES.html
+      - name: Package
+        env:
+          ARCH: ${{ matrix.arch }}
+        run: |
+          version=$(sed -n 's/^version = "\(.*\)"$/\1/p' Cargo.toml | head -n 1)
+          bin="target/${ARCH}-unknown-linux-musl/release/gliffherdr"
+          file "$bin"
+          file "$bin" | grep -E 'statically linked|static-pie linked'
+          if [ "$ARCH" = aarch64 ]; then qemu-aarch64-static "$bin" --version; else "$bin" --version; fi
+          stage=$(mktemp -d)
+          cp "$bin" LICENSE README.md THIRD_PARTY_LICENSES.html "$stage/"
+          mkdir -p dist
+          tar -C "$stage" -czf "dist/gliffherdr-${version}-${ARCH}-linux-musl.tar.gz" \
+            gliffherdr LICENSE README.md THIRD_PARTY_LICENSES.html
+          tar -tzf "dist/gliffherdr-${version}-${ARCH}-linux-musl.tar.gz"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist-${{ matrix.arch }}
+          path: dist/*.tar.gz
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: dist-*
+          merge-multiple: true
+          path: dist
+      - name: Checksums and release notes
+        run: |
+          test "$(find dist -name '*.tar.gz' | wc -l)" -eq 2
+          (cd dist && sha256sum -- *.tar.gz > SHA256SUMS && cat SHA256SUMS)
+          version=$(sed -n 's/^version = "\(.*\)"$/\1/p' Cargo.toml | head -n 1)
+          scripts/check-versions.sh --notes "v$version" > release-notes.md
+      - name: Dry run stops here
+        if: github.event_name == 'workflow_dispatch' && inputs.dry_run
+        run: echo 'dry run, nothing was published'
+      - uses: softprops/action-gh-release@v3
+        if: github.event_name == 'push' || !inputs.dry_run
+        with:
+          body_path: release-notes.md
+          files: |
+            dist/*.tar.gz
+            dist/SHA256SUMS
+          fail_on_unmatched_files: true

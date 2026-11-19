@@ -1,0 +1,44 @@
+id = "jaden-hoenes.gliffherdr"
+name = "gliffherdr"
+version = "0.1.0"
+min_herdr_version = "0.9.0"
+description = "Remote desktop to any machine you can ssh to: a picker that opens gliff windows for your herdr machines, ssh hosts and Tailscale peers."
+platforms = ["linux"]
+
+[[build]]
+command = ["sh", "scripts/install.sh"]
+
+[[startup]]
+command = ["bin/gliffherdr", "check", "--startup", "--quiet"]
+
+[[panes]]
+id = "picker"
+title = "Remote desktop"
+placement = "popup"
+width = "72%"
+height = "60%"
+command = ["bin/gliffherdr", "pick"]
+
+[[panes]]
+id = "fix"
+title = "Remote desktop: fix"
+placement = "split"
+command = ["bin/gliffherdr", "fix"]
+
+[[actions]]
+id = "connect"
+title = "Remote desktop: connect to a machine"
+contexts = ["global"]
+command = ["bin/gliffherdr", "open-picker"]
+
+[[actions]]
+id = "connect-pane"
+title = "Remote desktop: this pane's machine"
+contexts = ["pane"]
+command = ["bin/gliffherdr", "connect", "--from-pane"]
+
+[[actions]]
+id = "recheck"
+title = "Remote desktop: re-check machines"
+contexts = ["global"]
+command = ["bin/gliffherdr", "check", "--all", "--notify"]

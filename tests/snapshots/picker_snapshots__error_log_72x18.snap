@@ -1,0 +1,22 @@
+---
+source: tests/picker_snapshots.rs
+expression: "render(app, 72, 18).backend()"
+---
+" remote desktop › █                                          7 machines "
+" ▣ studio  studio.lan         window open            herdr tailscale    "
+" ● j       j@10.0.0.2         ready                  herdr              "
+" ● render  render@10.0.0.7    ready                  config             "
+" ▲ kiosk   kiosk.tail.ts.net  Hyprland not running   tailscale          "
+" ✕ nas     nas.lan            offline                recent             "
+" ▲ lab     lab@10.0.0.9       gliff-server missing   ssh                "
+" – air     air.tail.ts.net    macOS: needs Hyprland  tailscale          "
+"                                                                        "
+"                                                                        "
+"                                                                        "
+"                                                                        "
+"                                                                        "
+" gliff did not open a window for j@10.0.0.2.                            "
+" error: could not connect: Connection refused (os error 111)            "
+" log: …herdr/plugins/jaden-hoenes.gliffherdr/windows/j-1a2b3c/gliff.log "
+"                                                                        "
+" enter connect · alt-enter private screen · ctrl-o screen               "

@@ -1,0 +1,155 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CI: "true"
+  INSTA_UPDATE: "no"
+  CARGO_TERM_COLOR: always
+
+jobs:
+  lint:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install the pinned toolchain
+        run: rustup toolchain install
+      - uses: Swatinem/rust-cache@v2
+      - name: Install shellcheck
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends shellcheck
+      - name: rustfmt
+        run: cargo fmt --check
+      - name: clippy
+        run: cargo clippy --all-targets --locked -- -D warnings
+      - name: rustdoc
+        run: cargo doc --no-deps --locked
+        env:
+          RUSTDOCFLAGS: -D warnings
+      - name: shellcheck
+        run: shellcheck scripts/*.sh src/check/remote.sh
+      - name: Versions agree
+        run: scripts/check-versions.sh
+      - name: No leftover markers
+        run: |
+          if grep -rnE 'TODO|FIXME|todo!\(|unimplemented!\(|dbg!\(|not built yet' src; then
+            echo "::error::leftover marker in src/"
+            exit 1
+          fi
+      - name: Tree is clean
+        run: git diff --exit-code && test -z "$(git status --porcelain)"
+
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        # arm64 runners are free for public repositories only; private copies test on x86_64.
+        os: ${{ fromJSON(github.event.repository.private && '["ubuntu-24.04"]' || '["ubuntu-24.04", "ubuntu-24.04-arm"]') }}
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install the pinned toolchain
+        run: rustup toolchain install
+      - uses: Swatinem/rust-cache@v2
+      - name: Fetch the reference sources
+        run: scripts/vendor.sh
+      - name: cargo test
+        run: cargo test --locked
+      - name: Tree is clean
+        run: git diff --exit-code && test -z "$(git status --porcelain)"
+
+  e2e-ssh:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install the pinned toolchain
+        run: rustup toolchain install
+      - uses: Swatinem/rust-cache@v2
+      - name: Install sshd
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends openssh-server
+          sudo mkdir -p /run/sshd
+      - name: Directory the tests keep their files in
+        run: mkdir -p "$RUNNER_TEMP/gliffherdr-e2e"
+      - name: End-to-end against a real sshd
+        run: cargo test --locked --test e2e_ssh
+        env:
+          GLIFFHERDR_E2E_SSH: "1"
+          TMPDIR: ${{ runner.temp }}/gliffherdr-e2e
+      - name: Keep the test directories of a failed run
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: e2e-ssh-files
+          path: ${{ runner.temp }}/gliffherdr-e2e
+          if-no-files-found: ignore
+      - name: Tree is clean
+        run: git diff --exit-code && test -z "$(git status --porcelain)"
+
+  e2e-herdr:
+    runs-on: ubuntu-24.04
+    env:
+      HERDR_VERSION: v0.9.5
+      HERDR_SHA256: 14d9e8bc8b4a9e0118d77c32266f76d461f09b40342eb23752960bd89f59929d
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install the pinned toolchain
+        run: rustup toolchain install
+      - uses: Swatinem/rust-cache@v2
+      - name: Download herdr
+        run: |
+          mkdir -p "$RUNNER_TEMP/herdr"
+          curl -fsSL -o "$RUNNER_TEMP/herdr/herdr" \
+            "https://github.com/herdrdev/herdr/releases/download/${HERDR_VERSION}/herdr-linux-x86_64"
+          echo "${HERDR_SHA256}  $RUNNER_TEMP/herdr/herdr" | sha256sum -c -
+          chmod +x "$RUNNER_TEMP/herdr/herdr"
+          "$RUNNER_TEMP/herdr/herdr" --version
+      - name: Directory the tests keep their files in
+        run: mkdir -p "$RUNNER_TEMP/gliffherdr-e2e"
+      - name: End-to-end against a real herdr
+        run: cargo test --locked --test e2e_herdr
+        env:
+          GLIFFHERDR_E2E_HERDR: "1"
+          GLIFFHERDR_HERDR_BIN: ${{ runner.temp }}/herdr/herdr
+          TMPDIR: ${{ runner.temp }}/gliffherdr-e2e
+      - name: Keep the test directories of a failed run
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: e2e-herdr-files
+          path: ${{ runner.temp }}/gliffherdr-e2e
+          if-no-files-found: ignore
+      - name: Tree is clean
+        run: git diff --exit-code && test -z "$(git status --porcelain)"
+
+  msrv:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: "1.88"
+      - uses: Swatinem/rust-cache@v2
+      # rust-toolchain.toml would override the default toolchain; `+1.88` wins over it.
+      - name: cargo check on the minimum supported version
+        run: cargo +1.88 check --locked --all-targets
+      - name: Tree is clean
+        run: git diff --exit-code && test -z "$(git status --porcelain)"
+
+  deny:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          command: check

@@ -1,0 +1,11 @@
+---
+source: tests/picker_snapshots.rs
+expression: "render(&settled(), 100, 7).backend()"
+---
+"                                                                                                    "
+"                                                                                                    "
+"                                                                                                    "
+"                                       make the window larger                                       "
+"                                                                                                    "
+"                                                                                                    "
+"                                                                                                    "

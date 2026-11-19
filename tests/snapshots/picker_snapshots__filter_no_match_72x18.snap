@@ -1,0 +1,22 @@
+---
+source: tests/picker_snapshots.rs
+expression: "render(app, 72, 18).backend()"
+---
+" remote desktop › no such !█                                     0 of 7 "
+"                                                                        "
+"                                                                        "
+"                                                                        "
+"                                                                        "
+"                                                                        "
+"                                                                        "
+"                               No match.                                "
+"                                                                        "
+"                                                                        "
+"                                                                        "
+"                                                                        "
+"                                                                        "
+"                                                                        "
+"                                                                        "
+"                                                                        "
+"                                                                        "
+" enter connect · alt-enter private screen · ctrl-o screen               "

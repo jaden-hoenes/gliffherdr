@@ -1,0 +1,30 @@
+name: Feature request
+description: Suggest something gliffherdr could do.
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: Describe the situation, not the solution. What is hard or impossible today?
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like it to do?
+      description: A command, a key in the picker, a config key. A sketch of the output helps.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: What have you tried instead?
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope
+      description: gliffherdr opens gliff windows on Hyprland machines reachable over ssh. Requests outside that are usually out of scope.
+      options:
+        - label: This fits that scope (or I explain below why it should be in it)
+          required: true

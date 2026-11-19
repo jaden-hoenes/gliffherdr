@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security problem privately
+    url: https://github.com/jaden-hoenes/gliffherdr/security/advisories/new
+    about: Please do not open a public issue for a vulnerability.
+  - name: Problems with gliff itself
+    url: https://github.com/omacom/gliff/issues
+    about: The remote desktop client and server are gliff's. Report their bugs there.
+  - name: Problems with herdr itself
+    url: https://github.com/herdrdev/herdr/issues
+    about: The terminal multiplexer is herdr's. Report its bugs there.

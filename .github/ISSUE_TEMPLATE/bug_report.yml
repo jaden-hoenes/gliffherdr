@@ -1,0 +1,72 @@
+name: Bug report
+description: Something does not work the way the README or docs say it should.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time. The more of the fields below you fill in, the faster this can be fixed.
+        Please remove real host names, IP addresses and user names from anything you paste.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened, and what did you expect?
+      description: The picker, a command line, or a window that did not open. Say which machine status the picker showed.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open the picker (or run `gliffherdr connect ...`)
+        2. ...
+    validations:
+      required: true
+  - type: textarea
+    id: doctor
+    attributes:
+      label: Output of `gliffherdr doctor`
+      description: Run it in the same herdr pane or shell where the problem happens.
+      render: text
+    validations:
+      required: true
+  - type: input
+    id: gliffherdr-version
+    attributes:
+      label: gliffherdr version
+      description: Output of `gliffherdr --version`, or the plugin version in `herdr plugin list`.
+    validations:
+      required: true
+  - type: input
+    id: gliff-version
+    attributes:
+      label: gliff version (this machine)
+      description: Output of `gliff --version`.
+    validations:
+      required: true
+  - type: input
+    id: gliff-server-version
+    attributes:
+      label: gliff-server version (the remote machine)
+      description: Output of `ssh <machine> gliff-server --version`, if the problem involves one machine.
+  - type: input
+    id: herdr-version
+    attributes:
+      label: herdr version
+      description: Output of `herdr --version`.
+    validations:
+      required: true
+  - type: input
+    id: hyprland-version
+    attributes:
+      label: Hyprland version (this machine and, if relevant, the remote)
+      description: Output of `hyprctl version`.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: The window's `gliff.log` (see the troubleshooting guide for where it lives) or the plugin log (`herdr plugin log list`), if relevant.
+      render: text

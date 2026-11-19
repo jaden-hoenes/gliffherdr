@@ -1,0 +1,22 @@
+---
+source: tests/picker_snapshots.rs
+expression: "render(app, 72, 18).backend()"
+---
+" remote desktop › █                                          7 machines "
+" ▣ studio  studio.lan         window open            herdr tailscale    "
+" ● j       j@10.0.0.2         ready                  herdr              "
+" ● render  render@10.0.0.7    ready                  config             "
+" ▲ kiosk   kiosk.tail.ts.net  Hyprland not running   tailscale          "
+" ✕ nas     nas.lan            offline                recent             "
+" ▲ lab     lab┌ studio › screen ─────────────────────────┐              "
+" – air     air│ Mirror the focused screen                │cale          "
+"              │ Mirror DP-1                              │              "
+"              │ Mirror DP-2                              │              "
+"              │ Private screen sized to the window       │              "
+"              └──────────────────────────────────────────┘              "
+"                                                                        "
+"                                                                        "
+"                                                                        "
+" Opens mirror (focused screen)                                          "
+"                                                                        "
+" ↑↓ choose · enter select · esc cancel                                  "

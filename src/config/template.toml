@@ -1,0 +1,51 @@
+# gliffherdr configuration (TOML).
+#
+# Every setting is optional; the values shown are the defaults. Remove the leading `#` of a line
+# to change it. `gliffherdr config check` validates this file; a mistake shows as a banner in
+# the picker and the defaults are used until it is fixed.
+
+[connect]
+# What Enter opens: "mirror" shows the remote machine's focused screen; "headless" opens a
+# private screen sized to the window. In the picker, Alt+Enter always opens a private screen and
+# Ctrl+O lets you choose a screen.
+#mode = "mirror"
+
+# Extra arguments passed to gliff on every launch, for example ["--no-clipboard", "--video", "cpu"].
+#gliff_args = []
+
+# The gliff-server command to run on the remote machine (gliff's --server-bin), for example
+# "gliff-server --low-bandwidth". Empty means gliff's default, `gliff-server`.
+#server_bin = ""
+
+[sources]
+# Where machines are listed from. Each source can be switched off. Machines named under
+# [[machine]] below are listed whatever these switches say; only `hide` removes them.
+#herdr = true       # machines saved in herdr (`herdr machine list`)
+#recent = true      # machines you connected to before
+#gliff = true       # machines in gliff's own config
+#ssh_config = true  # Host entries in ~/.ssh/config (and the files it includes)
+#tailscale = true   # online Tailscale peers (`tailscale status`)
+
+# Machines never listed, by target or label (case-insensitive), for example ["backup-nas"].
+# `hide` applies to every source, [[machine]] entries included.
+#hide = []
+
+[check]
+# Check the known machines in the background when herdr starts (Tailscale peers are only checked
+# while the picker is open).
+#on_startup = true
+
+# How long a check result stays fresh, in seconds. Fresh results are not repeated.
+#fresh_for_secs = 600
+
+# How long ssh may take to connect during a check, in seconds (1 to 60).
+#ssh_timeout_secs = 5
+
+# Settings for one machine. Repeat the table for more machines.
+#[[machine]]
+#target = "j@10.0.0.2"                    # anything ssh accepts: user@host, an ssh alias, ssh://user@host:port
+#label = "desk"                           # the name shown in the picker
+#mode = "headless"                        # overrides [connect] mode for this machine
+#output = "HDMI-A-1"                      # mirror this remote screen (overrides mode)
+#server_bin = "gliff-server --low-bandwidth"
+#gliff_args = ["--no-clipboard"]

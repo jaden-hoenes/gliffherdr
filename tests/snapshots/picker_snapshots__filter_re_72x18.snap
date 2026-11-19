@@ -1,0 +1,22 @@
+---
+source: tests/picker_snapshots.rs
+expression: "render(app, 72, 18).backend()"
+---
+" remote desktop › re█                                            4 of 7 "
+" ● render  render@10.0.0.7    ready                  config             "
+" ✕ nas     nas.lan            offline                recent             "
+" ▣ studio  studio.lan         window open            herdr tailscale    "
+" – air     air.tail.ts.net    macOS: needs Hyprland  tailscale          "
+"                                                                        "
+"                                                                        "
+"                                                                        "
+"                                                                        "
+"                                                                        "
+"                                                                        "
+"                                                                        "
+"                                                                        "
+"                                                                        "
+"                                                                        "
+" Opens mirror (focused screen)                                          "
+"                                                                        "
+" enter connect · alt-enter private screen · ctrl-o screen               "
